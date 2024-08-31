@@ -48,7 +48,7 @@ parser.add_argument("--igusername", type=str, help="igusername")
 parser.add_argument("--hashtag", type=str, help="hashtag")
 parser.add_argument("--regarding", type=str, help="regarding")
 parser.add_argument("--number", type=int, help="number", default=3)
-parser.add_argument("--useapi", type=bool, help="use-api", default=False)
+parser.add_argument("--useapi", type=bool, help="useapi", default=False)
 parser.add_argument("--maxintervalminutes", type=int, help="maxintervalminutes", default=1)
 
 args = parser.parse_args()
