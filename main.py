@@ -1,51 +1,18 @@
-from instagrapi import Client
-import openai
-import json
-import time
-import random
-import argparse
-
-def get_comments(api_key, number, phrase, regarding):
-    openai.api_key = api_key
-    content_phrase = (f'generate {number} comments for instagram {phrase} post regarding {regarding} in informal slang'
-                      f' in a form of structured data json like ') + '{"number" : "comment"} without any other text'
-    print(content_phrase)
-    completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role":"user","content":content_phrase }]
-    )
-
-    return json.loads(completion.choices[0].message.content)
-
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(description="InstaComment")
-    parser.add_argument("--igusername", type=str, help="igusername")
-    parser.add_argument("--igpass", type=str, help="igpass")
-    parser.add_argument("--apikey", type=str, help="apikey")
-    parser.add_argument("--phrase", type=str, help="phrase")
-    parser.add_argument("--regarding", type=str, help="regarding")
-    parser.add_argument("--number",type=int, help="number")
-    parser.add_argument("--maxintervalminutes", type=int, help="maxintervalminutes")
-
-    args = parser.parse_args()
-
-    print(f"started with {args}")
-    print("Connecting to IG")
-
-    cl = Client()
-    cl.login(args.igusername, args.igpass)
-    medias = cl.hashtag_medias_recent_v1(args.phrase, args.number)
-
-    for media in medias:
-        print(media.id)
-    print("Get comments from chat")
-    comments = get_comments(args.apikey, args.number, args.phrase, args.regarding)
-    print(comments)
-
-    for index, media in enumerate(medias):
-        timesleeprandom = random.randint(0, args.maxintervalminutes)*60
-        print(timesleeprandom)
-        time.sleep(timesleeprandom)
-        print(media.id, comments[str(index+1)])
-        cl.media_comment(media.id, comments[str(index+1)])
+import random 
+from instagrapi import Client 
+with open("credentials.txt", "r") as f: 
+    username, password = f.read().splitlines() 
+client = Client() 
+client.login (username, password) 
+hashtag = "programming" 
+comments = ["Awesome", "Great", "Nice"] 
+medias = client.hashtag_medias_recent(hashtag, 20) 
+for i, media in enumerate(medias): 
+    client.media_like(media.id) 
+    print(f"Liked post number {i+1} of hashtag {hashtag}") 
+    if i % 5 == 0: 
+        client.user_follow(media.user.pk) 
+        print(f"Followed user {media.user.username}") 
+        comment = random.choice(comments)
+        client.media_comment(media.id, comment) 
+        print=(f"Commented {comment} under post number {i+1}")
