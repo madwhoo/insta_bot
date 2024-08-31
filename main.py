@@ -1,6 +1,6 @@
 import random 
 from instagrapi import Client 
-with open("credentials.txt", "r") as f: 
+with open("creds", "r") as f: 
     username, password = f.read().splitlines() 
 client = Client() 
 client.login (username, password) 
