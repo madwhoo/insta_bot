@@ -1,4 +1,5 @@
 from instagrapi import Client
+import google.generativeai as genai
 import openai
 import json
 import time
@@ -6,17 +7,18 @@ import random
 import argparse
 import sys
 
-def get_comments(api_key, number, hashtag, regarding):
-    openai.api_key = api_key
-    content_phrase = (f'erstelle {number} kommentare für instagram {hashtag} posts zum thema {regarding} in informal slang'
-                      f' in einem structured data json format wie folgt ') + '{"number" : "comment"} ohne anderen text'
-    print(content_phrase)
-    completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role":"user","content":content_phrase }]
-    )
 
-    return json.loads(completion.choices[0].message.content)
+def get_comments(number, hashtag, regarding):
+    genai.configure(api_key=api_key)
+    content_phrase = (f"erstelle eine Liste im JSON schema mit {number} kommentare für instagram {hashtag} posts hinsichtlich {regarding} "
+                      f"in informeller sprache und auf deutsch"
+                      "Return: list[comment]")
+    print(content_phrase)
+    model = genai.GenerativeModel('gemini-1.5-flash', generation_config={"response_mime_type": "application/json"})
+    completion = model.generate_content(content_phrase)
+    print(completion.text)
+    return json.loads(completion.text)
+
 
 def comment_media(client, user_medias, comments):
     for i, media in enumerate(user_medias):
@@ -29,17 +31,17 @@ def comment_media(client, user_medias, comments):
             comment = random.choice(comments)
             client.media_comment(media.id, str(comment))
             print(f"Commented '{comment}' under post number {i + 1}")
-        except HTTPError:
+        except Exception:
             client = login_client()
             pass
 
+
 def login_client():
-    with open("creds", "r") as f:
-        username, password, api_key = f.read().splitlines()
     print("Connecting to IG")
     new_client = Client()
     new_client.login(username, password)
     return new_client
+
 
 parser = argparse.ArgumentParser(description="InstaComment")
 parser.add_argument("--igusername", type=str, help="igusername")
@@ -52,26 +54,32 @@ parser.add_argument("--maxintervalminutes", type=int, help="maxintervalminutes",
 args = parser.parse_args()
 
 print(f"started with {args}")
+with open("creds", "r") as f:
+    username, password, api_key = f.read().splitlines()
 client = login_client()
+amount = 20
 
 if args.igusername is not None:
-    print("args.igusername is not None")
-    #user_id = client.user_id_from_username('mad.who0')
+    print(f"Commenting {amount} of user {args.igusername}")
     user_id = client.user_id_from_username(args.igusername)
     print(user_id)
-    medias = client.user_medias(user_id, 20)
+    medias = client.user_medias(user_id, amount)
 elif args.hashtag is not None:
-    print("args.hashtag is not None")
+    print(f"Commenting {amount} for hashtag {args.hashtag}")
     hashtag = args.hashtag
-    medias = client.hashtag_medias_recent(hashtag, 1)
+    # private mobile api
+    medias = client.hashtag_medias_recent_v1(hashtag, amount)
+    # public web api
+    # medias = client.hashtag_medias_recent_a1(hashtag, amount)
+    # medias = client.hashtag_medias_recent(hashtag, amount)
 else:
-    print("ELSE")
+    print("Exiting script")
     sys.exit()
 
 if args.useapi:
-    print("useapi true")
-    comments = get_comments(api_key, args.number, args.hashtag, args.regarding)
+    print("Get comments from AI")
+    comments = get_comments(args.number, args.hashtag, args.regarding)
 else:
-    print("ELSE - API")
+    print("Using default comments")
     comments = ["SICK🔥", "STRONG🔥", "WOW 🔥🔥🔥"]
 comment_media(client, medias, comments)
