@@ -7,23 +7,28 @@ import random
 import argparse
 import sys
 
+api_key = ""
+comments = ["SICK🔥", "STRONG🔥", "WOW 🔥🔥🔥"]
+creds = ["creds_frontler", "creds_funkerin", "creds_krup", "creds_macker"]
+login_creds_dict = {}
 
 def get_comments(number, hashtag, regarding):
+    print(f"Using api_key : {api_key}")
     genai.configure(api_key=api_key)
-    content_phrase = (f"erstelle eine Liste im JSON schema mit {number} kommentare für instagram {hashtag} posts hinsichtlich {regarding} "
-                      f"in informeller sprache und auf deutsch"
+    content_phrase = (f"erstelle eine Liste im JSON schema mit {number} kommentare für instagram '{hashtag}' posts hinsichtlich {regarding} "
+                      f"in Umgangssprache und auf deutsch "
                       "Return: list[comment]")
     print(content_phrase)
-    model = genai.GenerativeModel('gemini-1.5-flash', generation_config={"response_mime_type": "application/json"})
-    completion = model.generate_content(content_phrase)
+    model = genai.GenerativeModel('gemini-1.5-flash-latest', generation_config={"response_mime_type": "application/json"})
+    completion = model.generate_content(content_phrase, request_options={"timeout": 120})
     print(completion.text)
     return json.loads(completion.text)
 
 
-def comment_media(client, user_medias, comments):
+def comment_media(client, user_medias):
     for i, media in enumerate(user_medias):
         try:
-            time_sleep_random = random.randint(0, args.maxintervalminutes) * 60
+            time_sleep_random = random.randint(0, args.maxintervalminutes) * 600
             print(time_sleep_random)
             time.sleep(time_sleep_random)
             client.media_like(media.id)
@@ -38,24 +43,35 @@ def comment_media(client, user_medias, comments):
 
 def login_client():
     print("Connecting to IG")
+    user, password = random.choice(list(login_creds_dict.items()))
+    print(f"Using login for: {user}")
     new_client = Client()
-    new_client.login(username, password)
+    new_client.login(user, password)
     return new_client
+
+
+def load_creds():
+    global api_key
+    for cred in creds:
+        with open(cred, "r") as f:
+            username, password = f.read().splitlines()
+        login_creds_dict[username] = password
+    with open("creds_api", "r") as f:
+        api_key = f.read().splitlines()
 
 
 parser = argparse.ArgumentParser(description="InstaComment")
 parser.add_argument("--igusername", type=str, help="igusername")
 parser.add_argument("--hashtag", type=str, help="hashtag")
 parser.add_argument("--regarding", type=str, help="regarding")
-parser.add_argument("--number", type=int, help="number", default=3)
+parser.add_argument("--number", type=int, help="number", default=5)
 parser.add_argument("--useapi", type=bool, help="useapi", default=False)
 parser.add_argument("--maxintervalminutes", type=int, help="maxintervalminutes", default=1)
 
 args = parser.parse_args()
 
 print(f"started with {args}")
-with open("creds", "r") as f:
-    username, password, api_key = f.read().splitlines()
+load_creds()
 client = login_client()
 amount = 20
 
@@ -81,5 +97,5 @@ if args.useapi:
     comments = get_comments(args.number, args.hashtag, args.regarding)
 else:
     print("Using default comments")
-    comments = ["SICK🔥", "STRONG🔥", "WOW 🔥🔥🔥"]
-comment_media(client, medias, comments)
+
+comment_media(client, medias)
