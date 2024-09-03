@@ -1,26 +1,27 @@
 from instagrapi import Client
 import google.generativeai as genai
-import openai
+#import openai
 import json
 import time
 import random
 import argparse
 import sys
+#import os
 
 api_key = ""
 comments = ["SICK🔥", "STRONG🔥", "WOW 🔥🔥🔥"]
-creds = ["creds_frontler", "creds_funkerin", "creds_krup", "creds_macker"]
+creds = ["creds_funkerin", "creds_krup", "creds_macker"]#,"creds_frontler"]
 login_creds_dict = {}
 
 def get_comments(number, hashtag, regarding):
-    print(f"Using api_key : {api_key}")
+    print(f"Using api_key : '{api_key}'")
     genai.configure(api_key=api_key)
     content_phrase = (f"erstelle eine Liste im JSON schema mit {number} kommentare für instagram '{hashtag}' posts hinsichtlich {regarding} "
                       f"in Umgangssprache und auf deutsch "
                       "Return: list[comment]")
     print(content_phrase)
     model = genai.GenerativeModel('gemini-1.5-flash-latest', generation_config={"response_mime_type": "application/json"})
-    completion = model.generate_content(content_phrase, request_options={"timeout": 120})
+    completion = model.generate_content(content_phrase)#, request_options={"timeout": 120})
     print(completion.text)
     return json.loads(completion.text)
 
@@ -57,7 +58,7 @@ def load_creds():
             username, password = f.read().splitlines()
         login_creds_dict[username] = password
     with open("creds_api", "r") as f:
-        api_key = f.read().splitlines()
+        api_key = f.read().strip()
 
 
 parser = argparse.ArgumentParser(description="InstaComment")
@@ -72,6 +73,12 @@ args = parser.parse_args()
 
 print(f"started with {args}")
 load_creds()
+if args.useapi:
+    print("Get comments from AI")
+    comments = get_comments(args.number, args.hashtag, args.regarding)
+else:
+    print("Using default comments")
+
 client = login_client()
 amount = 20
 
@@ -92,10 +99,5 @@ else:
     print("Exiting script")
     sys.exit()
 
-if args.useapi:
-    print("Get comments from AI")
-    comments = get_comments(args.number, args.hashtag, args.regarding)
-else:
-    print("Using default comments")
 
 comment_media(client, medias)
