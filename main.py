@@ -1,4 +1,5 @@
 from instagrapi import Client
+from datetime import datetime
 import google.generativeai as genai
 #import openai
 import json
@@ -10,7 +11,7 @@ import sys
 
 api_key = ""
 comments = ["SICK🔥", "STRONG🔥", "WOW 🔥🔥🔥"]
-creds = ["creds_funkerin", "creds_krup", "creds_macker"]#,"creds_frontler"]
+creds = ["creds_funkerin", "creds_krup"]#, "creds_macker","creds_frontler"]
 login_creds_dict = {}
 
 def get_comments(number, hashtag, regarding):
@@ -28,18 +29,19 @@ def get_comments(number, hashtag, regarding):
 
 def comment_media(client, user_medias):
     for i, media in enumerate(user_medias):
-        try:
-            time_sleep_random = random.randint(0, args.maxintervalminutes) * 600
-            print(time_sleep_random)
-            time.sleep(time_sleep_random)
-            client.media_like(media.id)
-            print(f"Liked post number {i + 1} of hashtag {media.id}")
-            comment = random.choice(comments)
-            client.media_comment(media.id, str(comment))
-            print(f"Commented '{comment}' under post number {i + 1}")
-        except Exception:
-            client = login_client()
-            pass
+        #try:
+        time_sleep_random = random.randint(args.maxintervalminutes, 60) * 5
+        print(f"{datetime.now()} - Sleeping: '{time_sleep_random}'sec")
+        time.sleep(time_sleep_random)
+        print(f"{datetime.now()} - Done Sleeping")
+        client.media_like(media.id)
+        print(f"Liked post number {i + 1} of hashtag {media.id}")
+        comment = random.choice(comments)
+        client.media_comment(media.id, str(comment))
+        print(f"Commented '{comment}' under post number {i + 1}")
+        #except Exception:
+        #    client = login_client()
+        #    pass
 
 
 def login_client():
