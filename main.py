@@ -1,3 +1,5 @@
+from time import sleep
+
 from instagrapi import Client
 from datetime import datetime
 import google.generativeai as genai
@@ -11,7 +13,7 @@ import sys
 
 api_key = ""
 comments = ["SICK🔥", "STRONG🔥", "WOW 🔥🔥🔥"]
-creds = ["creds_funkerin", "creds_krup"]#, "creds_macker","creds_frontler"]
+creds = ["creds_funkerin", "creds_krup", "creds_macker","creds_frontler"]
 login_creds_dict = {}
 
 def get_comments(number, hashtag, regarding):
@@ -29,8 +31,7 @@ def get_comments(number, hashtag, regarding):
 
 def comment_media(client, user_medias):
     for i, media in enumerate(user_medias):
-        #try:
-        time_sleep_random = random.randint(args.maxintervalminutes, 60) * 5
+        time_sleep_random = random.randint(args.maxintervalminutes, args.maxintervalminutes + 60) * 5
         print(f"{datetime.now()} - Sleeping: '{time_sleep_random}'sec")
         time.sleep(time_sleep_random)
         print(f"{datetime.now()} - Done Sleeping")
@@ -39,18 +40,24 @@ def comment_media(client, user_medias):
         comment = random.choice(comments)
         client.media_comment(media.id, str(comment))
         print(f"Commented '{comment}' under post number {i + 1}")
-        #except Exception:
-        #    client = login_client()
-        #    pass
 
 
-def login_client():
+def login_client(attempts=0):
     print("Connecting to IG")
-    user, password = random.choice(list(login_creds_dict.items()))
-    print(f"Using login for: {user}")
-    new_client = Client()
-    new_client.login(user, password)
-    return new_client
+    if attempts < 3:
+        user, password = random.choice(list(login_creds_dict.items()))
+        print(f"Using login for: {user}")
+        try:
+            new_client = Client()
+            new_client.login(user, password)
+            return new_client
+        except Exception:
+            attempts =+ 1
+            sleep(300)
+            login_client(attempts)
+    else:
+        print(f"Logging attempts exceeded. Exiting..")
+        sys.exit()
 
 
 def load_creds():
@@ -100,6 +107,5 @@ elif args.hashtag is not None:
 else:
     print("Exiting script")
     sys.exit()
-
 
 comment_media(client, medias)
