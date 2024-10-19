@@ -41,6 +41,14 @@ def comment_media(client, user_medias):
         client.media_comment(media.id, str(comment))
         print(f"Commented '{comment}' under post number {i + 1}")
 
+def like_media(client, user_medias):
+    for i, media in enumerate(user_medias):
+        time_sleep_random = random.randint(args.maxintervalminutes, args.maxintervalminutes + 60) * 5
+        print(f"{datetime.now()} - Sleeping: '{time_sleep_random}'sec")
+        time.sleep(time_sleep_random)
+        print(f"{datetime.now()} - Done Sleeping")
+        client.media_like(media.id)
+        print(f"Liked post number {i + 1} of hashtag {media.id}")
 
 def login_client(attempts=0):
     print("Connecting to IG")
@@ -76,6 +84,7 @@ parser.add_argument("--hashtag", type=str, help="hashtag")
 parser.add_argument("--regarding", type=str, help="regarding")
 parser.add_argument("--number", type=int, help="number", default=5)
 parser.add_argument("--useapi", type=bool, help="useapi", default=False)
+parser.add_argument("--likeonly", type=bool, help="likeonly", default=False)
 parser.add_argument("--maxintervalminutes", type=int, help="maxintervalminutes", default=1)
 
 args = parser.parse_args()
@@ -92,12 +101,12 @@ client = login_client()
 amount = 20
 
 if args.igusername is not None:
-    print(f"Commenting {amount} of user {args.igusername}")
+    print(f"Getting {amount} media of user {args.igusername}")
     user_id = client.user_id_from_username(args.igusername)
     print(user_id)
     medias = client.user_medias(user_id, amount)
 elif args.hashtag is not None:
-    print(f"Commenting {amount} for hashtag {args.hashtag}")
+    print(f"Getting {amount} media for hashtag {args.hashtag}")
     hashtag = args.hashtag
     # private mobile api
     medias = client.hashtag_medias_recent_v1(hashtag, amount)
@@ -108,4 +117,7 @@ else:
     print("Exiting script")
     sys.exit()
 
-comment_media(client, medias)
+if args.likeonly is True:
+    like_media(client, medias)
+else:
+    comment_media(client, medias)
